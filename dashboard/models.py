@@ -39,8 +39,8 @@ class DimFakultas(models.Model):
     namafak = models.CharField(max_length=255, blank=True, null=True)
     isfakultas = models.BooleanField(blank=True, null=True)
 
-    def __str__(self):
-        return self.namafak
+    def __str__(self) -> str:
+        return str(self.namafak)
 
     class Meta:
         managed = False
@@ -418,7 +418,7 @@ class FactKetepatanlulus(models.Model):
 
 
 class FactMasaStudi(models.Model):
-    fakultas = models.ForeignKey(
+    dim_fakultaskode_fak = models.ForeignKey(
         DimFakultas, models.DO_NOTHING, db_column="dim_fakultaskode_fak"
     )
     dim_jurusankode_jurusan = models.ForeignKey(
