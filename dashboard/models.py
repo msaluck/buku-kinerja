@@ -8,6 +8,46 @@
 from django.db import models
 
 
+class Datalulusanperwisuda(models.Model):
+    wisudake = models.IntegerField(blank=True, null=True)
+    jumlah = models.BigIntegerField(blank=True, null=True)
+    id = models.BigIntegerField(blank=True, null=False, primary_key=True)
+
+    class Meta:
+        managed = False  # Created from a view. Don't remove.
+        db_table = "datalulusanperwisuda"
+
+
+class Datapindahan(models.Model):
+    namafakultas = models.CharField(max_length=255, blank=True, null=True)
+    namaprogstudi = models.CharField(max_length=255, blank=True, null=True)
+    tahunmasuk = models.CharField(max_length=25, blank=True, null=True)
+    namajenjang = models.CharField(max_length=50, blank=True, null=True)
+    jumlah = models.BigIntegerField(blank=True, null=True)
+
+    class Meta:
+        managed = False  # Created from a view. Don't remove.
+        db_table = "datapindahan"
+
+
+class Datarasiodosenmhs(models.Model):
+    kodenim = models.CharField(max_length=25, blank=True, null=True)
+    namaprogstudi = models.CharField(max_length=255, blank=True, null=True)
+    kodefak = models.CharField(max_length=25, blank=True, null=True)
+    namafakultas = models.CharField(max_length=255, blank=True, null=True)
+    jmlmhsaktif = models.IntegerField(blank=True, null=True)
+    jmldosenaktif = models.IntegerField(blank=True, null=True)
+    tahunakademik = models.CharField(max_length=25, blank=True, null=True)
+    kodetahunakadkul = models.CharField(max_length=25, blank=True, null=True)
+    kodejurusan = models.CharField(max_length=25, blank=True, null=True)
+    namajursan = models.CharField(max_length=255, blank=True, null=True)
+    rasiodosenmhsfloat = models.FloatField(blank=True, null=True)
+
+    class Meta:
+        managed = False  # Created from a view. Don't remove.
+        db_table = "datarasiodosenmhs"
+
+
 class DimAlumni(models.Model):
     nim = models.CharField(primary_key=True, max_length=32)
     namamhs = models.CharField(max_length=255, blank=True, null=True)
@@ -38,9 +78,6 @@ class DimFakultas(models.Model):
     kodefak = models.CharField(primary_key=True, max_length=255)
     namafak = models.CharField(max_length=255, blank=True, null=True)
     isfakultas = models.BooleanField(blank=True, null=True)
-
-    def __str__(self):
-        return self.namafak
 
     class Meta:
         managed = False
@@ -192,6 +229,7 @@ class DimTahunAkad(models.Model):
     semester = models.IntegerField(blank=True, null=True)
     tgl_awal_sem = models.DateTimeField(blank=True, null=True)
     tgl_akhir_sem = models.DateTimeField(blank=True, null=True)
+    is_current = models.BooleanField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -418,7 +456,7 @@ class FactKetepatanlulus(models.Model):
 
 
 class FactMasaStudi(models.Model):
-    fakultas = models.ForeignKey(
+    dim_fakultaskode_fak = models.ForeignKey(
         DimFakultas, models.DO_NOTHING, db_column="dim_fakultaskode_fak"
     )
     dim_jurusankode_jurusan = models.ForeignKey(
@@ -428,13 +466,10 @@ class FactMasaStudi(models.Model):
         DimProdi, models.DO_NOTHING, db_column="dim_prodikode_prodi"
     )
     dim_tahun_akadkode_tahun_akad = models.ForeignKey(
-        DimTahunAkad,
-        models.DO_NOTHING,
-        unique=True,
-        db_column="dim_tahun_akadkode_tahun_akad",
+        DimTahunAkad, models.DO_NOTHING, db_column="dim_tahun_akadkode_tahun_akad"
     )
     dim_mahasiswanim = models.ForeignKey(
-        DimMahasiswa, models.DO_NOTHING, unique=True, db_column="dim_mahasiswanim"
+        DimMahasiswa, models.DO_NOTHING, db_column="dim_mahasiswanim"
     )
     dim_statuskode_status = models.ForeignKey(
         DimStatus, models.DO_NOTHING, db_column="dim_statuskode_status"
@@ -452,48 +487,11 @@ class FactMasaStudi(models.Model):
     acc_yudisium_at = models.DateTimeField(blank=True, null=True)
     acc_yudisium_by = models.CharField(max_length=255, blank=True, null=True)
     tahunlulus = models.SmallIntegerField(blank=True, null=True)
-
-    @staticmethod
-    def get_nama_fakultas():
-        try:
-            fakultas = DimFakultas.objects.get(
-                kodefak=FactMasaStudi.dim_fakultaskode_fak
-            )
-            return fakultas.namafak
-        except DimFakultas.DoesNotExist:
-            return None
+    id = models.BigAutoField(primary_key=True)
 
     class Meta:
         managed = False
         db_table = "fact_masa_studi"
-
-
-class DataLulusanPerWisuda(models.Model):
-    wisudake = models.IntegerField()
-    jumlah = models.IntegerField()
-
-    class Meta:
-        managed = False
-        db_table = "datalulusanperwisuda"
-        verbose_name = "Data Lulusan Per Wisuda"
-        verbose_name_plural = "Data Lulusan Per Wisuda"
-
-
-class MasaStudiV2Kumulatif(models.Model):
-    dim_mahasiswanim = models.CharField(max_length=255, primary_key=True)
-    jumlah_hari = models.IntegerField()
-    masa_studi = models.FloatField()
-    ipk = models.FloatField()
-    tahunlulus = models.IntegerField()
-    nama_status = models.CharField(max_length=10, default="Lulus")
-    tahunangkatan = models.IntegerField()
-    namajenjang = models.CharField(max_length=255)
-    namaprodi = models.CharField(max_length=255)
-    namafak = models.CharField(max_length=255)
-
-    class Meta:
-        managed = False
-        db_table = "masastudiv2_kumulatif"
 
 
 class FactMasastudilulus(models.Model):
@@ -1100,3 +1098,244 @@ class FactTracerstudy(models.Model):
     class Meta:
         managed = False
         db_table = "fact_tracerstudy"
+
+
+class MasastudiIpkv2Lulusan(models.Model):
+    dim_mahasiswanim = models.CharField(max_length=255, blank=True, null=True)
+    jumlah_hari = models.BigIntegerField(blank=True, null=True)
+    masa_studi = models.FloatField(blank=True, null=True)
+    ipk = models.FloatField(blank=True, null=True)
+    tahunlulus = models.SmallIntegerField(blank=True, null=True)
+    nama_status = models.TextField(blank=True, null=True)
+    tahunangkatan = models.SmallIntegerField(blank=True, null=True)
+    namajenjang = models.CharField(max_length=255, blank=True, null=True)
+    namaprodi = models.CharField(max_length=255, blank=True, null=True)
+    namafak = models.CharField(max_length=255, blank=True, null=True)
+    id = models.BigIntegerField(blank=True, null=False, primary_key=True)
+
+    class Meta:
+        managed = False  # Created from a view. Don't remove.
+        db_table = "masastudi-ipkv2_lulusan"
+
+
+class Masastudiv2Mhsterdaftar(models.Model):
+    dim_fakultaskode_fak = models.CharField(max_length=255, blank=True, null=True)
+    dim_jurusankode_jurusan = models.CharField(max_length=255, blank=True, null=True)
+    dim_prodikode_prodi = models.CharField(max_length=255, blank=True, null=True)
+    dim_tahun_akadkode_tahun_akad = models.CharField(
+        max_length=255, blank=True, null=True
+    )
+    dim_mahasiswanim = models.CharField(max_length=255, blank=True, null=True)
+    dim_statuskode_status = models.IntegerField(blank=True, null=True)
+    tahun_tempuh = models.FloatField(blank=True, null=True)
+    bulan_tempuh = models.FloatField(blank=True, null=True)
+    hari_tempuh = models.IntegerField(blank=True, null=True)
+    ips = models.FloatField(blank=True, null=True)
+    ipk = models.FloatField(blank=True, null=True)
+    sks = models.IntegerField(blank=True, null=True)
+    kumulatif_sks_nilai = models.IntegerField(blank=True, null=True)
+    semester_ke = models.IntegerField(blank=True, null=True)
+    jumlah_hari = models.IntegerField(blank=True, null=True)
+    acc_yudisium = models.BooleanField(blank=True, null=True)
+    acc_yudisium_at = models.DateTimeField(blank=True, null=True)
+    acc_yudisium_by = models.CharField(max_length=255, blank=True, null=True)
+    tahunlulus = models.SmallIntegerField(blank=True, null=True)
+    id = models.BigIntegerField(blank=True, null=False, primary_key=True)
+    namafak = models.CharField(max_length=255, blank=True, null=True)
+    namaprodi = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        managed = False  # Created from a view. Don't remove.
+        db_table = "masastudiv2_mhsterdaftar"
+        db_table_comment = "view ini digunakan untuk membuat Pivot Table mengkonstruksi informasi masa studi mahasiswa yang status terdaftar (akti, cuti, lulus). Data dasar nya bersifat detail , per mahasiswa per semester"
+
+
+class ViewFactMasaStudiKhususlulus1(models.Model):
+    dim_fakultaskode_fak = models.CharField(max_length=255, blank=True, null=True)
+    dim_jurusankode_jurusan = models.CharField(max_length=2, blank=True, null=True)
+    dim_prodikode_prodi = models.CharField(max_length=255, blank=True, null=True)
+    dim_tahun_akadkode_tahun_akad = models.CharField(
+        max_length=255, blank=True, null=True
+    )
+    dim_mahasiswanim = models.CharField(max_length=255, blank=True, null=True)
+    dim_statuskode_status = models.TextField(blank=True, null=True)
+    tahun_tempuh = models.FloatField(blank=True, null=True)
+    bulan_tempuh = models.FloatField(blank=True, null=True)
+    hari_tempuh = models.FloatField(blank=True, null=True)
+    ips = models.FloatField(blank=True, null=True)
+    ipk = models.FloatField(blank=True, null=True)
+    sks = models.IntegerField(blank=True, null=True)
+    kumulatif_sks_nilai = models.IntegerField(blank=True, null=True)
+    semester_ke = models.BigIntegerField(blank=True, null=True)
+    jumlah_hari = models.DecimalField(
+        max_digits=65535, decimal_places=65535, blank=True, null=True
+    )
+    tgl_awal_sem = models.DateTimeField(blank=True, null=True)
+    tgl_akhir_sem = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False  # Created from a view. Don't remove.
+        db_table = "view_fact_masa_studi_khususlulus_1"
+
+
+class ViewFactTracer(models.Model):
+    id = models.BigIntegerField(blank=True, null=False, primary_key=True)
+    nim = models.CharField(max_length=32, blank=True, null=True)
+    sumberbiaya_id = models.IntegerField(blank=True, null=True)
+    aktivitassaatini = models.CharField(max_length=255, blank=True, null=True)
+    namauniversitas = models.CharField(max_length=255, blank=True, null=True)
+    namaprodi = models.CharField(max_length=255, blank=True, null=True)
+    jenjangpendidikan = models.CharField(max_length=255, blank=True, null=True)
+    durasilulus_studilanjut = models.CharField(max_length=255, blank=True, null=True)
+    isstudilanjut = models.SmallIntegerField(blank=True, null=True)
+    pekerjaankurang6bulan = models.BooleanField(blank=True, null=True)
+    bulandapatpekerjaan = models.IntegerField(blank=True, null=True)
+    namaperusahaan_instansi = models.CharField(max_length=255, blank=True, null=True)
+    alamatperusahaan_instansi = models.CharField(max_length=255, blank=True, null=True)
+    levelperusahaan = models.CharField(max_length=255, blank=True, null=True)
+    bergerakdibidang = models.CharField(max_length=255, blank=True, null=True)
+    gajipertama = models.CharField(max_length=255, blank=True, null=True)
+    umktempatkerja = models.DecimalField(
+        max_digits=19, decimal_places=0, blank=True, null=True
+    )
+    takehomepay = models.DecimalField(
+        max_digits=19, decimal_places=0, blank=True, null=True
+    )
+    pendapatanperbulan_utama = models.DecimalField(
+        max_digits=19, decimal_places=0, blank=True, null=True
+    )
+    pendapatanperbulan_tip_lembur = models.DecimalField(
+        max_digits=19, decimal_places=0, blank=True, null=True
+    )
+    pendapatanperbulan_pekerjaanlain = models.DecimalField(
+        max_digits=19, decimal_places=0, blank=True, null=True
+    )
+    isbekerja = models.SmallIntegerField(blank=True, null=True)
+    jenisusaha = models.CharField(max_length=255, blank=True, null=True)
+    namaperusahaan = models.CharField(max_length=255, blank=True, null=True)
+    jabatansaatini = models.CharField(max_length=255, blank=True, null=True)
+    alamattempatusaha = models.CharField(max_length=255, blank=True, null=True)
+    levelusaha = models.CharField(max_length=255, blank=True, null=True)
+    berbadanhukum = models.BooleanField(blank=True, null=True)
+    pendapatanperbulan = models.CharField(max_length=255, blank=True, null=True)
+    umktempatusaha = models.DecimalField(
+        max_digits=19, decimal_places=0, blank=True, null=True
+    )
+    iswiraswasta = models.SmallIntegerField(blank=True, null=True)
+    jumlah = models.IntegerField(blank=True, null=True)
+    tahuntracer = models.SmallIntegerField(blank=True, null=True)
+    tanggaltracer = models.DateField(blank=True, null=True)
+
+    class Meta:
+        managed = False  # Created from a view. Don't remove.
+        db_table = "view_fact_tracer"
+
+
+class ViewFactTracerKetepatanlulus(models.Model):
+    pembuat = models.CharField(
+        db_column="Pembuat", max_length=500, blank=True, null=True
+    )  # Field name made lowercase.
+    number_1769 = models.CharField(
+        db_column="1769", max_length=500, blank=True, null=True
+    )  # Field renamed because it wasn't a valid Python identifier.
+    alamatasal = models.CharField(max_length=500, blank=True, null=True)
+    alamatdomisili = models.CharField(max_length=500, blank=True, null=True)
+    emailmsmh = models.CharField(max_length=500, blank=True, null=True)
+    f1001 = models.CharField(max_length=500, blank=True, null=True)
+    f1002 = models.CharField(max_length=500, blank=True, null=True)
+    f1101 = models.CharField(max_length=500, blank=True, null=True)
+    f1102 = models.CharField(max_length=500, blank=True, null=True)
+    f1201 = models.CharField(max_length=500, blank=True, null=True)
+    f1202 = models.CharField(max_length=500, blank=True, null=True)
+    f14 = models.CharField(max_length=500, blank=True, null=True)
+    f15 = models.CharField(max_length=500, blank=True, null=True)
+    f1601 = models.CharField(max_length=500, blank=True, null=True)
+    f1602 = models.CharField(max_length=500, blank=True, null=True)
+    f1603 = models.CharField(max_length=500, blank=True, null=True)
+    f1604 = models.CharField(max_length=500, blank=True, null=True)
+    f1605 = models.CharField(max_length=500, blank=True, null=True)
+    f1606 = models.CharField(max_length=500, blank=True, null=True)
+    f1607 = models.CharField(max_length=500, blank=True, null=True)
+    f1608 = models.CharField(max_length=500, blank=True, null=True)
+    f1609 = models.CharField(max_length=500, blank=True, null=True)
+    f1610 = models.CharField(max_length=500, blank=True, null=True)
+    f1611 = models.CharField(max_length=500, blank=True, null=True)
+    f1612 = models.CharField(max_length=500, blank=True, null=True)
+    f1613 = models.CharField(max_length=500, blank=True, null=True)
+    f1614 = models.CharField(max_length=500, blank=True, null=True)
+    f1761 = models.CharField(max_length=500, blank=True, null=True)
+    f1762 = models.CharField(max_length=500, blank=True, null=True)
+    f1763 = models.CharField(max_length=500, blank=True, null=True)
+    f1764 = models.CharField(max_length=500, blank=True, null=True)
+    f1765 = models.CharField(max_length=500, blank=True, null=True)
+    f1766 = models.CharField(max_length=500, blank=True, null=True)
+    f1767 = models.CharField(max_length=500, blank=True, null=True)
+    f1768 = models.CharField(max_length=500, blank=True, null=True)
+    f1770 = models.CharField(max_length=500, blank=True, null=True)
+    f1771 = models.CharField(max_length=500, blank=True, null=True)
+    f1772 = models.CharField(max_length=500, blank=True, null=True)
+    f1773 = models.CharField(max_length=500, blank=True, null=True)
+    f1774 = models.CharField(max_length=500, blank=True, null=True)
+    f18a = models.CharField(max_length=500, blank=True, null=True)
+    f18b = models.CharField(max_length=500, blank=True, null=True)
+    f18c = models.CharField(max_length=500, blank=True, null=True)
+    f18d = models.CharField(max_length=500, blank=True, null=True)
+    f21 = models.CharField(max_length=500, blank=True, null=True)
+    f22 = models.CharField(max_length=500, blank=True, null=True)
+    f23 = models.CharField(max_length=500, blank=True, null=True)
+    f24 = models.CharField(max_length=500, blank=True, null=True)
+    f25 = models.CharField(max_length=500, blank=True, null=True)
+    f26 = models.CharField(max_length=500, blank=True, null=True)
+    f27 = models.CharField(max_length=500, blank=True, null=True)
+    f301 = models.CharField(max_length=500, blank=True, null=True)
+    f302 = models.CharField(max_length=500, blank=True, null=True)
+    f303 = models.CharField(max_length=500, blank=True, null=True)
+    f401 = models.CharField(max_length=500, blank=True, null=True)
+    f402 = models.CharField(max_length=500, blank=True, null=True)
+    f403 = models.CharField(max_length=500, blank=True, null=True)
+    f404 = models.CharField(max_length=500, blank=True, null=True)
+    f405 = models.CharField(max_length=500, blank=True, null=True)
+    f406 = models.CharField(max_length=500, blank=True, null=True)
+    f407 = models.CharField(max_length=500, blank=True, null=True)
+    f408 = models.CharField(max_length=500, blank=True, null=True)
+    f409 = models.CharField(max_length=500, blank=True, null=True)
+    f410 = models.CharField(max_length=500, blank=True, null=True)
+    f411 = models.CharField(max_length=500, blank=True, null=True)
+    f412 = models.CharField(max_length=500, blank=True, null=True)
+    f413 = models.CharField(max_length=500, blank=True, null=True)
+    f414 = models.CharField(max_length=500, blank=True, null=True)
+    f415 = models.CharField(max_length=500, blank=True, null=True)
+    f416 = models.CharField(max_length=500, blank=True, null=True)
+    f502 = models.CharField(max_length=500, blank=True, null=True)
+    f504 = models.CharField(max_length=500, blank=True, null=True)
+    f505 = models.CharField(max_length=500, blank=True, null=True)
+    f506 = models.CharField(max_length=500, blank=True, null=True)
+    f5a1 = models.CharField(max_length=500, blank=True, null=True)
+    f5a2 = models.CharField(max_length=500, blank=True, null=True)
+    f5b = models.CharField(max_length=500, blank=True, null=True)
+    f5c = models.CharField(max_length=500, blank=True, null=True)
+    f5d = models.CharField(max_length=500, blank=True, null=True)
+    f6 = models.CharField(max_length=500, blank=True, null=True)
+    f7 = models.CharField(max_length=500, blank=True, null=True)
+    f7a = models.CharField(max_length=500, blank=True, null=True)
+    f8 = models.CharField(max_length=500, blank=True, null=True)
+    h21 = models.CharField(max_length=500, blank=True, null=True)
+    h31 = models.CharField(max_length=500, blank=True, null=True)
+    h41 = models.CharField(max_length=500, blank=True, null=True)
+    ijazahmsmh = models.CharField(max_length=500, blank=True, null=True)
+    kdpstmsmh = models.CharField(max_length=500, blank=True, null=True)
+    kdptimsmh = models.CharField(max_length=500, blank=True, null=True)
+    kontakkeluarga = models.CharField(max_length=500, blank=True, null=True)
+    nik = models.CharField(max_length=500, blank=True, null=True)
+    nimhsmsmh = models.CharField(max_length=500, blank=True, null=True)
+    nmmhsmsmh = models.CharField(max_length=500, blank=True, null=True)
+    npwp = models.CharField(max_length=500, blank=True, null=True)
+    slipgaji = models.CharField(max_length=500, blank=True, null=True)
+    tahun_lulus = models.CharField(max_length=500, blank=True, null=True)
+    telpomsmh = models.CharField(max_length=500, blank=True, null=True)
+    kodefak = models.CharField(max_length=255, blank=True, null=True)
+    namafak = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        managed = False  # Created from a view. Don't remove.
+        db_table = "view_fact_tracer_ketepatanlulus"
