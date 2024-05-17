@@ -31,6 +31,6 @@ def dashboard_with_pivot(request):
 
 
 def pivot_data(request):
-dataset = MasaStudiV2Kumulatif.objects.all()
-data = serializers.serialize("json", dataset)
-return JsonResponse(data, safe=False)
+    dataset = MasaStudiV2Kumulatif.objects.all()
+    data = serializers.serialize("json", dataset)
+    return JsonResponse(data, safe=False)
